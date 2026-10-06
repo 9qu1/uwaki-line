@@ -1,0 +1,503 @@
+/* =========================================================
+   結果画面・共有・友達に見せるページ・作者のほかのサイト（結果担当）
+   - 部品は base.css（docs/design.md）を使い、ここは結果まわりの並べ方と飾りだけ
+   - いちばん上の「1画面に収まる部分」（.rs-shot）は、幅 390×高さ 844 で切れずに入る大きさに保つ
+     （375×667 でも収まるように、高さの低い画面では詰める）
+   ========================================================= */
+
+/* ---------- 結果画面の外枠 ---------- */
+.rs { padding-top: 16px; }
+
+/* ---------- 1画面に収まる部分 ---------- */
+.rs-shot {
+  --tc: var(--ink);
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+/* いちばん上の3色の線（サイトの印） */
+.rs-shot::before {
+  content: "";
+  display: block;
+  height: 5px;
+  background: var(--tri);
+}
+.rs-shot--feel::before {
+  background: linear-gradient(90deg, var(--only) 0 31%, transparent 31% 34.5%, var(--friend) 34.5% 65.5%, transparent 65.5% 69%, var(--anyone) 69% 100%);
+}
+.rs-shot-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 14px 8px;
+}
+.rs-brand { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.rs-logo { width: 26px; height: 26px; flex: none; }
+.rs-brand-text { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+.rs-brand-text b { font-family: var(--font-display); font-weight: 900; font-size: 15px; letter-spacing: .04em; white-space: nowrap; }
+.rs-brand-text small { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .1em; white-space: nowrap; }
+.rs-shot-kind {
+  flex: none;
+  padding: 3px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+/* タイプの色の面 */
+.rs-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "text art" "trail trail";
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 12px;
+  margin: 0 10px;
+  padding: 16px 14px 14px 16px;
+  border-radius: 20px;
+  background-color: var(--tc);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, .16));
+  color: #FFFFFF;
+  overflow: hidden;
+  isolation: isolate;
+}
+/* 飾り：右の絵のうしろに大きな輪 */
+.rs-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 84% 42%, transparent 0 66px, rgba(255, 255, 255, .09) 66px 68px, transparent 68px 96px, rgba(255, 255, 255, .07) 96px 98px, transparent 98px 128px, rgba(255, 255, 255, .05) 128px 130px, transparent 130px);
+}
+.rs-hero-text { grid-area: text; min-width: 0; }
+.rs-hero-label { display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; color: rgba(255, 255, 255, .78); }
+.rs-type-name {
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(22px, 6.6vw, 28px);
+  line-height: 1.25;
+  letter-spacing: .02em;
+  color: #FFFFFF;
+  /* 文節の切れ目（JS が入れる <wbr>）だけで折り返す */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.h2.rs-about-name { word-break: keep-all; overflow-wrap: anywhere; }
+/* 名前の切れ目の単位（「スポットライト」など）は途中で折り返さない。入らないときは JS（fitTypeName）が字を小さくする */
+.nu { white-space: nowrap; }
+.rs-type-name.is-tight .nu { white-space: normal; }
+.rs-type-catch { margin-top: 6px; font-size: 12.5px; font-weight: 700; line-height: 1.55; color: rgba(255, 255, 255, .92); word-break: auto-phrase; }
+
+/* タイプの絵（無いときは色の面と頭文字） */
+.rs-art {
+  grid-area: art;
+  position: relative;
+  width: clamp(96px, 29vw, 122px);
+  aspect-ratio: 1 / 1;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .14);
+  box-shadow: 0 0 0 4px #FFFFFF, 0 12px 24px -10px rgba(0, 0, 0, .5);
+  transform: rotate(-3deg);
+  overflow: hidden;
+}
+.rs-art-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rs-art-ph {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 50px;
+  line-height: 1;
+  color: #FFFFFF;
+  background-color: var(--tc);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, 0) 70%);
+}
+.rs-art-ph i { position: absolute; left: 24%; right: 24%; bottom: 15%; height: 5px; border-radius: 3px; background: var(--tri); }
+.rs-shot--feel .rs-art-ph i { background: linear-gradient(90deg, var(--only) 0 31%, transparent 31% 34.5%, var(--friend) 34.5% 65.5%, transparent 65.5% 69%, var(--anyone) 69% 100%); }
+.rs-art.has-img .rs-art-ph { display: none; }
+
+/* 30問の足あと（色の暗い面の上なので、まだの印は白の薄い色） */
+.rs-trail { grid-area: trail; gap: 3px; }
+.rs-trail > i { height: 7px; background: rgba(255, 255, 255, .22); }
+
+/* 数字 */
+.rs-nums {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: 14px;
+  padding: 12px 16px 2px;
+}
+.rs-big { min-width: 0; }
+.rs-big .bignum-label { letter-spacing: .06em; }
+.rs-big .bignum-val { font-size: clamp(56px, 17vw, 70px); }
+.rs-big .bignum-unit { font-size: 18px; }
+.rs-stats { display: grid; gap: 6px; min-width: 0; }
+.rs-stat {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 6px;
+  padding: 6px 10px 6px;
+  border-radius: 12px;
+}
+.rs-stat .stat-label { grid-column: 1 / -1; font-size: 11px; }
+.rs-stat .stat-val { font-size: 22px; }
+.rs-stat .stat-val small { font-size: 12px; }
+.rs-stat-sub { font-size: 10.5px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 大きなメーター */
+.rs-meter { padding: 6px 16px 0; }
+.rs-mainmeter { height: 30px; }
+.rs-mainmeter .meter-track { height: 11px; }
+.rs-mainmeter .meter-mark { width: 10px; height: 28px; border-radius: 5px; }
+.rs-meter .meter-scale { margin-top: 0; align-items: center; }
+.rs-avg-note { font-size: 10.5px; color: var(--muted) !important; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+.rs-avg-note::before { content: ""; width: 0; height: 0; border: 4px solid transparent; border-bottom: 6px solid var(--muted); border-top: 0; }
+/* 平均とほぼ同じとき（三角は印に隠れるので出さない） */
+.rs-avg-note.is-near::before { display: none; }
+.meter-scale--feel > span:first-child { color: var(--only-ink); }
+.meter-scale--feel > span:last-child { color: var(--anyone-ink); }
+
+/* カテゴリ5本 */
+.rs-cats { gap: 0; padding: 6px 16px 0; }
+.rs-cats .meter-row { grid-template-columns: 4.4em minmax(0, 1fr) 2.1em; gap: 8px; }
+.rs-cats .meter { height: 23px; }
+.rs-cats .meter-name { font-size: 12.5px; }
+.rs-cats .meter-val { font-size: 15px; }
+
+/* 本音ラインの6タイプの地図 */
+.rs-map {
+  display: grid;
+  grid-template-columns: 5.4em minmax(0, 1fr) minmax(0, 1fr);
+  gap: 5px;
+  padding: 10px 14px 0;
+}
+.rs-map-h { text-align: center; font-size: 10.5px; font-weight: 700; color: var(--muted); line-height: 1.3; }
+.rs-map-r { align-self: center; font-size: 11px; font-weight: 700; color: var(--ink-2); line-height: 1.3; }
+.rs-map-c {
+  display: grid;
+  place-items: center;
+  min-height: 36px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  /* 名前の切れ目（<wbr>）で折り返す。欄より長い単位だけ字の途中で切る */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.rs-map-c .nu { white-space: normal; }
+@media (max-width: 375px) { .rs-map-c { font-size: 10.5px; padding-inline: 4px; } }
+.rs-map-c.is-mine {
+  background: var(--mc);
+  border-color: var(--mc);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-weight: 900;
+  box-shadow: 0 6px 14px -8px var(--mc);
+}
+
+/* 下の帯（URL） */
+.rs-shot-foot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 16px 11px;
+  background: var(--ink);
+  color: #FFFFFF;
+}
+.rs-url { font-family: var(--font-display); font-weight: 900; font-size: 14.5px; letter-spacing: .03em; white-space: nowrap; }
+.rs-foot-note { font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, .7); white-space: nowrap; }
+
+/* 数字なし（友達のページで数字が読めないとき・タイプの紹介） */
+.rs-nonum { padding: 14px 16px 2px; font-size: 14px; line-height: 1.8; color: var(--ink-2); }
+
+/* 高さの低い画面（375×667 など）では詰める */
+@media (max-height: 760px) and (max-width: 520px) {
+  .rs-shot-top { padding: 7px 12px 6px; }
+  .rs-hero { padding: 12px 12px 12px 14px; row-gap: 10px; }
+  .rs-art { width: 92px; border-radius: 16px; }
+  .rs-type-name { font-size: 22px; }
+  .rs-type-catch { margin-top: 3px; }
+  .rs-nums { padding-top: 8px; gap: 10px; }
+  .rs-big .bignum-val { font-size: 54px; }
+  .rs-stat { padding: 4px 9px; }
+  .rs-stat .stat-val { font-size: 19px; }
+  .rs-meter { padding-top: 2px; }
+  .rs-cats { padding-top: 2px; }
+  .rs-cats .meter { height: 20px; }
+  .rs-cats .meter-row { min-height: 0; }
+  .rs-map { padding-top: 6px; gap: 4px; }
+  .rs-map-c { min-height: 30px; }
+  .rs-shot-foot { margin-top: 8px; padding: 8px 14px 9px; }
+}
+
+/* ---------- すぐ下の小さな共有ボタン ---------- */
+.rs-quick {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 12px;
+}
+.rs-qbtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 6px 0 4px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.rs-qbtn:active .rs-qic { transform: translateY(2px); }
+@media (hover: hover) { .rs-qbtn:hover { background: var(--bg-2); color: var(--ink); } }
+.rs-qic {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  box-shadow: 0 3px 0 rgba(26, 24, 38, .12);
+  transition: transform .1s var(--ease);
+}
+.rs-qic .brand-ic { width: 46px; height: 46px; }
+.rs-qic svg:not(.brand-ic) { width: 21px; height: 21px; }
+.rs-qic--ink { background: var(--ink); color: #FFFFFF; }
+.rs-qic--line { background: var(--surface); border: 1.5px solid var(--line-strong); color: var(--ink); }
+.rs-shot-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+.rs-shot-hint svg { width: 14px; height: 14px; flex: none; }
+
+/* ---------- タイプの説明 ---------- */
+.rs-about { --tc: var(--ink); }
+.rs-about-catch { display: block; margin-top: 2px; font-size: 14px; font-weight: 700; color: var(--ink-2); letter-spacing: .02em; }
+.rs-points { display: grid; gap: 10px; }
+.rs-point {
+  padding: 13px 16px 14px;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--tc);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.rs-point-label { display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; color: var(--muted); }
+.rs-point p { margin-top: 3px; font-size: 15px; font-weight: 700; line-height: 1.7; color: var(--ink); }
+.rs-point--tip { background: var(--ink); border-color: var(--ink); border-left-color: var(--tc); }
+.rs-point--tip .rs-point-label { color: rgba(255, 255, 255, .66); }
+.rs-point--tip p { color: #FFFFFF; font-family: var(--font-display); font-size: 16px; }
+
+/* ---------- 30問の答えとみんなの割合 ---------- */
+.rs-filter .seg-btn { padding: 0 6px; }
+.rs-qlist {
+  padding: 0 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.rs-qrow .band-meta { gap: 6px 8px; }
+.rs-qnote { margin-left: auto; font-weight: 700; }
+.rs-answers .chips .chip b { font-family: var(--font-num); font-weight: 800; }
+
+/* ---------- 画像を保存・シェア ---------- */
+.rs-preview-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  overflow: hidden;
+}
+.rs-preview-img {
+  width: auto;
+  max-width: 100%;
+  max-height: 440px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-2);
+}
+.rs-preview[data-variant="detail"] .rs-preview-frame { max-height: 480px; overflow-y: auto; place-items: start center; }
+.rs-preview[data-variant="detail"] .rs-preview-img { width: 100%; max-height: none; }
+.rs-preview-cap { margin-top: 8px; text-align: center; }
+
+/* ---------- 共有ボタン ---------- */
+.rs-share-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.rs-sbtn { min-width: 0; padding: 0 10px; gap: 7px; font-size: 14.5px; }
+.rs-sbtn svg { width: 22px !important; height: 22px !important; }
+.brand-ic { display: block; flex: none; }
+
+/* ---------- 当てっこ ---------- */
+.rs-quiz-card { --gap: 10px; }
+.rs-quiz-ic {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .12);
+}
+.rs-quiz-ic svg { width: 24px; height: 24px; }
+.rs-quiz-card .card-title { font-size: 20px; }
+.rs-quiz-note { font-size: 12px; }
+.rs-quiz-btn, .fr-cta-btn { background: #FFFFFF; color: var(--ink); box-shadow: inset 0 -3px 0 rgba(26, 24, 38, .16); }
+@media (hover: hover) { .rs-quiz-btn:hover, .fr-cta-btn:hover { background: var(--moya-soft); } }
+
+/* ---------- 浮気ラインと本音のズレ・くらべる ---------- */
+.rs-gap-card { --gap: 12px; }
+.rs-gap-level { font-family: var(--font-display); font-weight: 900; font-size: 24px; line-height: 1.35; }
+/* 恋人に広く許しているときの1行（段の文と数字が食い違わないように） */
+.rs-gap-kind { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; font-weight: 700; line-height: 1.6; color: var(--ink-2); }
+.rs-gap-kind svg { width: 16px; height: 16px; flex: none; margin-top: 3px; color: var(--friend-ink); }
+.rs-gap-meter .meter-track { background: linear-gradient(90deg, var(--safe-line), var(--moya-line) 50%, var(--out-line)); }
+.rs-gap-list { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.rs-gap-item {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.rs-gap-item.is-sweet { border-left-color: var(--out); }
+.rs-gap-item.is-kind { border-left-color: var(--only); }
+.rs-gap-q { display: flex; gap: 8px; font-size: 14px; font-weight: 700; line-height: 1.6; }
+.rs-gap-pair { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; }
+.rs-gap-side { display: inline-flex; align-items: center; gap: 6px; }
+.rs-gap-side small { font-size: 11px; font-weight: 700; color: var(--muted); }
+
+/* ---------- 案内のモーダル ---------- */
+.rs-modal-img { width: auto; max-width: 100%; max-height: 46vh; margin: 14px auto 0; border-radius: 12px; box-shadow: var(--shadow-1); }
+
+/* ---------- 作者のほかのサイト ---------- */
+.ss-list { display: grid; gap: 16px; }
+.ss-card {
+  --ss: var(--ink);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+}
+.ss-visual {
+  position: relative;
+  display: block;
+  height: 196px;
+  overflow: hidden;
+  background-color: var(--surface-2);
+  background-image:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--ss) 16%, transparent), transparent 60%),
+    radial-gradient(90% 90% at 100% 100%, color-mix(in srgb, var(--ss) 12%, transparent), transparent 60%);
+  border-bottom: 1px solid var(--line);
+}
+/* 画面（スマホの枠） */
+.ss-phone {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  width: 124px;
+  height: 214px;
+  border: 5px solid var(--ink);
+  border-radius: 22px;
+  background: #FFFFFF;
+  overflow: hidden;
+  box-shadow: 0 16px 30px -14px rgba(26, 24, 38, .55);
+  transform: rotate(-4deg);
+}
+.ss-phone img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+/* 結果の画像 */
+.ss-result {
+  position: absolute;
+  width: 56%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px #FFFFFF, 0 14px 26px -12px rgba(26, 24, 38, .5);
+}
+.ss-result--1 { right: 14px; top: 22px; transform: rotate(3deg); }
+.ss-result--2 { right: 30px; top: 106px; width: 52%; transform: rotate(-2.5deg); }
+.ss-result--1:last-child { top: 34px; width: 50%; right: 22px; }
+.ss-body { display: grid; gap: 4px; padding: 14px 16px 16px; }
+.ss-name { display: flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 900; font-size: 14px; }
+.ss-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ss); flex: none; }
+.ss-sub { font-family: var(--font-body); font-size: 11.5px; font-weight: 700; color: var(--muted); }
+.ss-title { font-family: var(--font-display); font-weight: 900; font-size: 17px; line-height: 1.45; word-break: auto-phrase; }
+.ss-desc { font-size: 13px; line-height: 1.75; color: var(--ink-2); }
+.ss-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.ss-btn svg { width: 14px; height: 14px; }
+@media (hover: hover) {
+  .ss-visual:hover .ss-result--1 { transform: rotate(1deg) translateY(-3px); }
+  .ss-visual:hover .ss-phone { transform: rotate(-2deg) translateY(-3px); }
+}
+.ss-result, .ss-phone { transition: transform .25s var(--ease); }
+
+/* ---------- 友達に見せるページ ---------- */
+.fr-head .rs-shot { margin-top: 4px; }
+.fr-cta-card { --gap: 10px; }
+.fr-cta-card .card-title { font-size: 21px; }
+.fr-vs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 700; color: var(--ink-2); }
+.fr-vs b {
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--tc);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-weight: 900;
+}
+.fr-same { font-size: 1.35em; }
+.fr-type-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.fr-type {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-decoration: none;
+}
+.fr-type-dot { width: 12px; height: 12px; flex: none; border-radius: 4px; background: var(--tc); }
+.fr-type.is-current { background: var(--tc); border-color: var(--tc); color: #FFFFFF; }
+.fr-type.is-current .fr-type-dot { background: #FFFFFF; }
+@media (hover: hover) { .fr-type:hover { border-color: var(--tc); } }
+/* 静かな下書き（JS が描くまでの中身・検索向け） */
+.fr-static .rs-about-catch { margin-bottom: 6px; }

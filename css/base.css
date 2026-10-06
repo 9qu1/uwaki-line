@@ -1,0 +1,1229 @@
+/* =========================================================
+   浮気許せる度診断見た目の土台
+   - 考え方・使い方は docs/design.md
+   - テーマは「線引き＝ライン」。答えは信号の3色（アウト／モヤる／セーフ）
+   - 明るいテーマだけ。スマホ（幅320〜430px）が主、PC は真ん中に寄せる
+   - 書体は各ページの <head> で Google Fonts を読む（docs/design.md の「書体」）
+   ========================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* ---- 地・文字・線 ---- */
+  --bg: #F5F1EA;          /* 地（あたたかい生成り） */
+  --bg-2: #ECE6DB;        /* 一段沈んだ地（チップ・帯の下地） */
+  --surface: #FFFFFF;     /* カードの面 */
+  --surface-2: #FBF8F3;   /* カードの中の面 */
+  --ink: #1A1826;         /* 文字（墨） */
+  --ink-2: #4A4657;       /* 二番目の文字 */
+  --muted: #66616F;       /* 注記（地 #F5F1EA で 5.3:1・白で 6:1。小さい字でも 4.5:1 をこえる） */
+  --line: #E3DCCF;        /* 線 */
+  --line-strong: #CEC4B4; /* 強い線（入力欄など） */
+
+  /* ---- アクセント（主ボタンは墨。色は答えの色にまかせる） ---- */
+  --accent: #1A1826;
+  --accent-ink: #FFFFFF;
+  --focus: #2F6FED;       /* キーボード操作の枠 */
+
+  /* ---- 浮気ラインの3つの答え（信号） ---- */
+  --out: #E5484D;  --out-ink: #B8262B;  --out-soft: #FDECEC;  --out-line: #F5C2C3;   /* アウト */
+  --moya: #F2A516; --moya-ink: #8F5600; --moya-soft: #FFF3D9; --moya-line: #F5D693;  /* モヤる */
+  --safe: #22A06B; --safe-ink: #157148; --safe-soft: #E3F4EB; --safe-line: #A9DCC2;  /* セーフ */
+  /* 白い小さな字を上に乗せる面（帯の数字・べた塗りの札）。白い字と 4.5:1 をこえるよう少しだけ暗くした色 */
+  --out-fill: #D04246; --safe-fill: #1C8559; --friend-fill: #2A73D5;
+
+  /* ---- 本音ラインの3つの答え ---- */
+  --only: #8A4DE8;   --only-ink: #6430C0;   --only-soft: #F1EAFE;   --only-line: #D4C1FA;   /* 気になる人にだけ */
+  --friend: #2F80ED; --friend-ink: #1A5FC0; --friend-soft: #E7F0FE; --friend-line: #B8D2FA; /* 友達ならする */
+  --anyone: #64748B; --anyone-ink: #46526A; --anyone-soft: #EDF0F4; --anyone-line: #C9D1DC; /* 誰とでもする */
+
+  /* ---- 書体 ---- */
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Meiryo", sans-serif;
+  --font-display: "Zen Kaku Gothic New", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+  --font-num: "Bricolage Grotesque", "Zen Kaku Gothic New", system-ui, sans-serif;
+
+  /* ---- 形 ---- */
+  --maxw: 520px;
+  --gutter: 16px;
+  --r-sm: 10px;
+  --r: 16px;
+  --r-lg: 22px;
+  --r-pill: 999px;
+  --shadow-1: 0 1px 2px rgba(26, 24, 38, .05), 0 6px 18px -10px rgba(26, 24, 38, .18);
+  --shadow-2: 0 2px 6px rgba(26, 24, 38, .06), 0 22px 44px -18px rgba(26, 24, 38, .32);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+
+  /* 3色をつないだ「ライン」（ロゴ・見出しの飾り・メーター） */
+  --tri: linear-gradient(90deg, var(--out) 0 31%, transparent 31% 34.5%, var(--moya) 34.5% 65.5%, transparent 65.5% 69%, var(--safe) 69% 100%);
+  --tri-soft: linear-gradient(90deg, var(--out-line) 0 32.6%, transparent 32.6% 33.6%, var(--moya-line) 33.6% 66.4%, transparent 66.4% 67.4%, var(--safe-line) 67.4% 100%);
+}
+
+/* ---------- 下地 ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100svh;
+  background-color: var(--bg);
+  background-image: radial-gradient(900px 520px at 50% -260px, #FFFFFF 0%, rgba(255, 255, 255, 0) 70%);
+  background-repeat: no-repeat;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.75;
+  line-break: strict;
+  overflow-wrap: anywhere;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+}
+img, svg, video, canvas { display: block; max-width: 100%; }
+img { height: auto; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-underline-offset: .2em; text-decoration-thickness: 1px; }
+p { margin: 0; }
+h1, h2, h3, h4 { margin: 0; }
+ul, ol { margin: 0; padding: 0; }
+
+[hidden] { display: none !important; }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+::selection { background: var(--moya-line); color: var(--ink); }
+
+/* 見出しや問題の文は、文節の切れ目で折り返す（対応ブラウザのみ。ほかはふつうに折り返す）
+   ※ Zen Kaku Gothic New（Google Fonts 版）には palt（かなのつめ組み）が無いので、字間は letter-spacing で調整している */
+.h1, .h2, .h3, .display, .choice-label, .qcard-text, .card-title, .entry-title, .link-card-title, .modal-title, .band-q, .lead {
+  word-break: auto-phrase;
+}
+
+/* ---------- 枠 ---------- */
+.wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.section { margin-block: 44px; }
+.section:first-child { margin-top: 20px; }
+
+/* ---------- ヘッダー ---------- */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding-block: 10px;
+  /* 中身は --maxw の幅にそろえ、背景は横いっぱい */
+  padding-inline: max(var(--gutter), calc(50% - var(--maxw) / 2 + var(--gutter)));
+}
+.site-header--sticky {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(245, 241, 234, .86);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
+  border-bottom: 1px solid rgba(206, 196, 180, .5);
+}
+.brand {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+.brand-mark { width: 30px; height: 30px; flex: none; }
+.brand-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.brand-name {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 19px;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+.brand-sub {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+.header-nav { display: flex; align-items: center; gap: 2px; flex: none; }
+.header-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 11px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.header-link svg { width: 16px; height: 16px; }
+/* 押せる範囲だけを上下に広げる（見た目は 36px のまま・押せるのは 44px） */
+.header-link::after, .brand::after { content: ""; position: absolute; inset: -4px 0; }
+.brand::after { inset: -5px 0; }
+.header-link[aria-current="page"] { background: var(--bg-2); color: var(--ink); }
+@media (hover: hover) { .header-link:hover { background: var(--bg-2); color: var(--ink); } }
+
+/* ---------- フッター ---------- */
+.site-footer {
+  margin-top: 64px;
+  padding-top: 28px;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  padding-inline: max(var(--gutter), calc(50% - var(--maxw) / 2 + var(--gutter)));
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 15px;
+  color: var(--ink);
+  letter-spacing: .06em;
+}
+.footer-brand .brand-mark { width: 22px; height: 22px; }
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 18px;
+  margin: 8px 0 6px;
+  list-style: none;
+}
+.footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px; /* 押しやすい高さ（となりの行と間をあける） */
+  color: var(--ink-2);
+  font-weight: 700;
+  text-decoration: none;
+}
+@media (hover: hover) { .footer-links a:hover { color: var(--ink); text-decoration: underline; } }
+.footer-note { margin-top: 4px; }
+
+/* ---------- 文字 ---------- */
+.h1, .h2, .h3, .display { font-family: var(--font-display); color: var(--ink); text-wrap: balance; }
+.h1 { font-weight: 900; font-size: clamp(26px, 7.6vw, 34px); line-height: 1.38; letter-spacing: .02em; }
+.h2 { font-weight: 900; font-size: 22px; line-height: 1.45; letter-spacing: .02em; }
+.h3 { font-weight: 700; font-size: 17px; line-height: 1.5; }
+.display { font-weight: 900; }
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: .1em;
+  color: var(--ink-2);
+}
+.eyebrow::before {
+  content: "";
+  flex: none;
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--tri);
+}
+.lead { font-size: 16px; line-height: 1.85; color: var(--ink-2); }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; line-height: 1.7; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; letter-spacing: -.01em; overflow-wrap: normal; }
+.nowrap { white-space: nowrap; }
+.link { color: var(--ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--line-strong); text-decoration-thickness: 2px; }
+@media (hover: hover) { .link:hover { text-decoration-color: var(--ink); } }
+
+/* 3色の短い線（飾り）。<span class="tri-line"></span> */
+.tri-line { display: inline-block; width: 36px; height: 5px; border-radius: 3px; background: var(--tri); vertical-align: middle; }
+
+/* 区切り線：細い線の真ん中に印 */
+.divider {
+  position: relative;
+  height: 1px;
+  margin: 36px 0;
+  background: var(--line-strong);
+  border: 0;
+}
+.divider::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--ink);
+  box-shadow: 0 0 0 3px var(--bg);
+  transform: translate(-50%, -50%);
+}
+
+/* ---------- ボタン ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 24px;
+  border: 1.5px solid transparent;
+  border-radius: var(--r-pill);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.3;
+  letter-spacing: .03em;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: transform .12s var(--ease), box-shadow .15s var(--ease), background-color .15s, border-color .15s, color .15s;
+}
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn:active { transform: translateY(2px); }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .42; pointer-events: none; box-shadow: none; }
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .38), 0 10px 22px -12px rgba(26, 24, 38, .7);
+}
+.btn-primary:active { box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .38), 0 4px 10px -8px rgba(26, 24, 38, .7); }
+@media (hover: hover) { .btn-primary:hover { background: #2A2738; } }
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line-strong);
+  box-shadow: 0 3px 0 var(--line);
+}
+.btn-secondary:active { box-shadow: 0 1px 0 var(--line); }
+@media (hover: hover) { .btn-secondary:hover { border-color: var(--ink); } }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-2);
+  padding-inline: 14px;
+}
+@media (hover: hover) { .btn-ghost:hover { background: var(--bg-2); color: var(--ink); } }
+
+.btn-sm { position: relative; min-height: 36px; padding: 0 14px; font-size: 13.5px; gap: 6px; }
+/* 小さいボタンは、見た目は 36px のまま、押せる範囲だけ上下に 44px 以上まで広げる（::after は枠線 1.5px の内側から測るので、そのぶん多めに） */
+.btn-sm::after { content: ""; position: absolute; inset: -6px 0; }
+.btn-sm svg { width: 15px; height: 15px; }
+.btn-sm.btn-primary { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .38); }
+.btn-sm.btn-secondary { box-shadow: 0 2px 0 var(--line); }
+.btn-lg { min-height: 60px; font-size: 17.5px; padding: 0 28px; }
+.btn-block { display: flex; width: 100%; }
+.btn-wrap { white-space: normal; }
+.btn-icon { width: 44px; min-height: 44px; padding: 0; }
+.btn-icon.btn-sm { width: 36px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn-row > .btn { flex: 1 1 0; min-width: 0; }
+
+/* ---------- 3択の答えボタン（浮気ライン） ---------- */
+/* 縦に 赤→黄→緑 と並べると信号機になる */
+.choices { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.choice {
+  --c: var(--ink); --c-ink: var(--ink); --c-soft: var(--surface-2); --c-line: var(--line);
+  --dot: var(--c);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 74px;
+  margin: 0;
+  padding: 12px 16px 12px 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--c-line);
+  border-radius: 20px;
+  box-shadow: 0 4px 0 var(--c-line);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation; /* すばやい2回押しで拡大しない */
+  transition: transform .1s var(--ease), box-shadow .1s var(--ease), background-color .18s, border-color .18s;
+}
+.choice--out  { --c: var(--out);  --c-ink: var(--out-ink);  --c-soft: var(--out-soft);  --c-line: var(--out-line); }
+.choice--moya { --c: var(--moya); --c-ink: var(--moya-ink); --c-soft: var(--moya-soft); --c-line: var(--moya-line); }
+.choice--safe { --c: var(--safe); --c-ink: var(--safe-ink); --c-soft: var(--safe-soft); --c-line: var(--safe-line); }
+.choice--only   { --c: var(--only);   --c-ink: var(--only-ink);   --c-soft: var(--only-soft);   --c-line: var(--only-line); }
+.choice--friend { --c: var(--friend); --c-ink: var(--friend-ink); --c-soft: var(--friend-soft); --c-line: var(--friend-line); }
+.choice--anyone { --c: var(--anyone); --c-ink: var(--anyone-ink); --c-soft: var(--anyone-soft); --c-line: var(--anyone-line); }
+
+/* 左のランプ */
+.choice-lamp {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--c-soft);
+  box-shadow: inset 0 0 0 2px var(--c);
+  transition: background-color .18s, box-shadow .18s;
+}
+.choice-lamp::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--dot);
+  transition: transform .18s var(--ease), background-color .18s;
+}
+.choice-body { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.choice-label {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 21px;
+  line-height: 1.25;
+  letter-spacing: .02em;
+  color: var(--c-ink);
+}
+.choice-sub { font-size: 12.5px; line-height: 1.45; color: var(--ink-2); font-weight: 500; }
+.choice-end {
+  font-family: var(--font-num);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--c-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .choice:hover { border-color: var(--c); }
+}
+.choice:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--c-line); }
+
+/* 選んだ（JS で .is-selected か aria-pressed="true"） */
+.choice.is-selected, .choice[aria-pressed="true"] {
+  background: var(--c-soft);
+  border-color: var(--c);
+  box-shadow: 0 4px 0 var(--c);
+  animation: choice-pop .32s var(--ease);
+}
+.choice.is-selected:active, .choice[aria-pressed="true"]:active { box-shadow: 0 1px 0 var(--c); }
+.choice.is-selected .choice-lamp, .choice[aria-pressed="true"] .choice-lamp {
+  background: var(--c);
+  box-shadow: 0 0 0 5px var(--c-line);
+}
+.choice.is-selected .choice-lamp::after, .choice[aria-pressed="true"] .choice-lamp::after {
+  inset: 0;
+  background: #FFFFFF;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9.5 16.5l4.4 4.3 8.6-9.3' fill='none' stroke='black' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9.5 16.5l4.4 4.3 8.6-9.3' fill='none' stroke='black' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+/* ほかの答えを薄く（結果の見直しなどで） */
+.choice.is-dim { opacity: .5; }
+.choice[disabled] { cursor: default; }
+.choice[disabled]:active { transform: none; }
+
+@keyframes choice-pop {
+  0% { transform: translateY(3px) scale(.985); }
+  55% { transform: translateY(-1px) scale(1.012); }
+  100% { transform: none; }
+}
+
+/* 本音ライン：ランプの中の点の数＝その行動をする相手の広さ（1人・友達・誰とでも）
+   <div class="choices choices--feel"> の中で .choice--only / --friend / --anyone を使う */
+.choices--feel .choice-lamp::after { inset: 0; border-radius: 50%; }
+.choices--feel .choice--only .choice-lamp::after {
+  background: radial-gradient(circle at 50% 50%, var(--dot) 0 4.6px, transparent 5.2px);
+}
+.choices--feel .choice--friend .choice-lamp::after {
+  background:
+    radial-gradient(circle at 34% 50%, var(--dot) 0 3.6px, transparent 4.2px),
+    radial-gradient(circle at 66% 50%, var(--dot) 0 3.6px, transparent 4.2px);
+}
+.choices--feel .choice--anyone .choice-lamp::after {
+  background:
+    radial-gradient(circle at 50% 33%, var(--dot) 0 3.2px, transparent 3.8px),
+    radial-gradient(circle at 31% 64%, var(--dot) 0 3.2px, transparent 3.8px),
+    radial-gradient(circle at 69% 64%, var(--dot) 0 3.2px, transparent 3.8px);
+}
+/* 本音は選んでもチェックにせず、点が白くなる */
+.choices--feel .choice.is-selected .choice-lamp::after,
+.choices--feel .choice[aria-pressed="true"] .choice-lamp::after {
+  -webkit-mask: none;
+  mask: none;
+}
+.choices--feel .choice.is-selected, .choices--feel .choice[aria-pressed="true"] { --dot: #FFFFFF; }
+
+/* 横3列（場所が狭いところ用。浮気ラインの短い答えなら幅320pxでも1行） */
+.choices--row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.choices--row .choice {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-content: center;
+  gap: 8px;
+  min-height: 104px;
+  padding: 14px 6px 12px;
+  text-align: center;
+  border-radius: 18px;
+}
+.choices--row .choice-body { align-items: center; }
+.choices--row .choice-label { font-size: 17px; letter-spacing: .02em; }
+.choices--row .choice-sub { font-size: 11px; }
+.choices--row .choice-lamp { width: 28px; height: 28px; }
+
+/* ---------- 問題のカード（遊ぶ画面） ---------- */
+.qcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 168px;
+  padding: 20px 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+}
+.qcard-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.qcard-num {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 16px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.qcard-num b { font-family: var(--font-num); font-size: 28px; line-height: 1; color: var(--ink); font-weight: 800; letter-spacing: -.02em; }
+.qcard-text {
+  margin-block: auto; /* 問題の文をカードの残りの高さの真ん中に */
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 1.6;
+  letter-spacing: .03em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.qcard-note { font-size: 12.5px; color: var(--muted); }
+/* 問題が切りかわるとき（JS で .is-enter を付けてすぐ外す） */
+.qcard.is-enter { animation: q-in .28s var(--ease); }
+@keyframes q-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+
+/* ---------- 進み具合のバー ---------- */
+.progress { --p: 0%; display: flex; align-items: center; gap: 12px; }
+.progress-track {
+  position: relative;
+  flex: 1;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--bg-2);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: var(--p);
+  border-radius: inherit;
+  background: var(--ink);
+  transition: width .35s var(--ease);
+}
+.progress-count {
+  flex: none;
+  font-family: var(--font-num);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.progress-count b { font-size: 17px; color: var(--ink); font-weight: 800; }
+
+/* 答えの足あと：30個の小さな印が答えの色でうまっていく */
+.trail { display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 3px; }
+.trail > i {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-2);
+  transition: background-color .2s;
+}
+.trail > i.is-out { background: var(--out); }
+.trail > i.is-moya { background: var(--moya); }
+.trail > i.is-safe { background: var(--safe); }
+.trail > i.is-only { background: var(--only); }
+.trail > i.is-friend { background: var(--friend); }
+.trail > i.is-anyone { background: var(--anyone); }
+.trail > i.is-now { background: var(--ink); height: 6px; box-shadow: 0 0 0 2px var(--bg); transform: scaleY(1.5); }
+
+/* ---------- カード ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-1);
+}
+.card--tight { padding: 14px 16px; border-radius: var(--r); }
+.card--soft { background: var(--surface-2); box-shadow: none; }
+.card--flat { box-shadow: none; }
+.card--ink { background: var(--ink); color: #FFFFFF; border-color: var(--ink); }
+.card--ink .muted, .card--ink .card-sub { color: rgba(255, 255, 255, .66); }
+.card-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1.45;
+  letter-spacing: .02em;
+}
+.card-sub { font-size: 13px; color: var(--ink-2); line-height: 1.7; }
+a.card { display: block; color: inherit; text-decoration: none; transition: transform .15s var(--ease), box-shadow .15s; }
+@media (hover: hover) { a.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); } }
+
+/* 入口のカード（トップの2つの診断など）。--c で色を変える */
+.entry-card {
+  --c: var(--ink); --c-soft: var(--surface-2);
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 20px 20px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+  color: var(--ink);
+  text-decoration: none;
+  overflow: hidden;
+  transition: transform .15s var(--ease), box-shadow .15s;
+}
+.entry-card::before {
+  content: "";
+  position: absolute;
+  left: 20px; right: 20px; top: 0;
+  height: 5px;
+  border-radius: 0 0 4px 4px;
+  background: var(--entry-bar, var(--tri));
+}
+.entry-card--feel { --entry-bar: linear-gradient(90deg, var(--only) 0 31%, transparent 31% 34.5%, var(--friend) 34.5% 65.5%, transparent 65.5% 69%, var(--anyone) 69% 100%); }
+.entry-title { font-family: var(--font-display); font-weight: 900; font-size: 21px; line-height: 1.35; letter-spacing: .03em; }
+.entry-desc { font-size: 13.5px; line-height: 1.75; color: var(--ink-2); }
+.entry-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--muted); font-weight: 700; }
+.entry-go {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 36px; padding: 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--ink); color: #FFFFFF;
+  font-family: var(--font-display); font-weight: 700; font-size: 13.5px;
+}
+.entry-go svg { width: 14px; height: 14px; }
+.entry-card:active { transform: translateY(2px); }
+@media (hover: hover) { .entry-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); } }
+
+/* 絵つきのリンクのカード（作者のほかのサイトなど） */
+.link-card {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: var(--shadow-1);
+  transition: transform .15s var(--ease), box-shadow .15s;
+}
+.link-card-img {
+  width: 96px;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--bg-2);
+}
+.link-card-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.link-card-name { font-size: 11.5px; font-weight: 700; color: var(--muted); letter-spacing: .06em; }
+.link-card-title { font-family: var(--font-display); font-weight: 900; font-size: 16px; line-height: 1.45; }
+.link-card-desc { font-size: 12.5px; line-height: 1.6; color: var(--ink-2); }
+.link-card--wide { grid-template-columns: 1fr; padding: 0; overflow: hidden; gap: 0; }
+.link-card--wide .link-card-img { width: 100%; aspect-ratio: 16 / 9; border-radius: 0; }
+.link-card--wide .link-card-body { padding: 14px 16px 16px; }
+.link-card:active { transform: translateY(2px); }
+@media (hover: hover) { .link-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); } }
+
+/* ---------- チップ ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  --c: var(--ink-2); --c-ink: var(--ink-2); --c-soft: var(--bg-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 3px 11px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--c-soft);
+  color: var(--c-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.chip svg { width: 14px; height: 14px; flex: none; }
+.chip--out  { --c: var(--out);  --c-ink: var(--out-ink);  --c-soft: var(--out-soft); }
+.chip--moya { --c: var(--moya); --c-ink: var(--moya-ink); --c-soft: var(--moya-soft); }
+.chip--safe { --c: var(--safe); --c-ink: var(--safe-ink); --c-soft: var(--safe-soft); }
+.chip--only   { --c: var(--only);   --c-ink: var(--only-ink);   --c-soft: var(--only-soft); }
+.chip--friend { --c: var(--friend); --c-ink: var(--friend-ink); --c-soft: var(--friend-soft); }
+.chip--anyone { --c: var(--anyone); --c-ink: var(--anyone-ink); --c-soft: var(--anyone-soft); }
+.chip--ink { --c: var(--ink); --c-ink: #FFFFFF; --c-soft: var(--ink); }
+.chip--line { background: transparent; border-color: var(--line-strong); color: var(--ink-2); }
+/* 色の丸を前に付ける */
+.chip--dot::before {
+  content: "";
+  width: 8px; height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--c);
+}
+/* 色をべた塗り（白い文字。モヤるだけは墨の文字）。白い字が読めるよう、アウト・セーフ・友達は少し暗い面 */
+.chip.is-solid { background: var(--c); color: #FFFFFF; }
+.chip--out.is-solid { background: var(--out-fill); }
+.chip--safe.is-solid { background: var(--safe-fill); }
+.chip--friend.is-solid { background: var(--friend-fill); }
+.chip--moya.is-solid { color: var(--ink); }
+.chip.is-solid.chip--dot::before { background: currentColor; }
+.chip-sm { min-height: 22px; padding: 1px 8px; font-size: 11px; }
+
+/* 押して選ぶチップ（属性など）。<button class="chip chip--pick" aria-pressed="false"> */
+.chip--pick {
+  min-height: 40px;
+  padding: 6px 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--line-strong);
+  color: var(--ink-2);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color .15s, border-color .15s, color .15s, transform .1s;
+}
+.chip--pick:active { transform: scale(.97); }
+.chip--pick[aria-pressed="true"], .chip--pick.is-on { background: var(--ink); border-color: var(--ink); color: #FFFFFF; }
+@media (hover: hover) { .chip--pick:hover { border-color: var(--ink); } }
+
+/* ---------- 切りかえ（相手の呼び方・タブ） ---------- */
+.seg {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-2);
+  border-radius: var(--r-pill);
+}
+.seg-btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color .15s, color .15s, box-shadow .15s;
+}
+.seg-btn[aria-pressed="true"], .seg-btn[aria-selected="true"], .seg-btn.is-on {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(26, 24, 38, .08), 0 3px 10px -4px rgba(26, 24, 38, .22);
+}
+
+/* ---------- 入力欄 ---------- */
+.field { display: grid; gap: 6px; }
+.field-label { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+.field-label .muted { font-weight: 500; }
+.field-help { font-size: 12px; line-height: 1.6; color: var(--ink-2); } /* 名前の注意書きなど。読みやすい濃さに */
+.field-error { font-size: 12.5px; line-height: 1.6; font-weight: 700; color: var(--out-ink); }
+.field-count { justify-self: end; font-family: var(--font-num); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.input, .select, .textarea {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 16px; /* 16px 未満だと iPhone で拡大される */
+  line-height: 1.5;
+  transition: border-color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.textarea { min-height: 110px; resize: vertical; }
+.select {
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%234A4657' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px 16px;
+}
+.input::placeholder, .textarea::placeholder { color: #A9A3B2; }
+.input:focus, .select:focus, .textarea:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 4px rgba(47, 111, 237, .18);
+}
+.input.is-error, .input[aria-invalid="true"], .textarea[aria-invalid="true"] {
+  border-color: var(--out);
+  box-shadow: 0 0 0 4px rgba(229, 72, 77, .14);
+}
+/* 入力欄＋ボタンを横に（幅が足りなければ折り返す） */
+.input-row { display: flex; gap: 8px; }
+.input-row > .input { flex: 1; min-width: 0; }
+.input-row > .btn { flex: none; }
+
+/* ---------- トースト ---------- */
+/* <div class="toast" role="status" aria-live="polite"></div> を置き、JS で .is-show を付け外し */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 100;
+  width: max-content; /* left:50% でも短い文を折り返さない */
+  max-width: calc(100% - 32px);
+  padding: 12px 20px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 16px);
+  transition: opacity .2s, transform .25s var(--ease);
+}
+.toast.is-show { opacity: 1; transform: translate(-50%, 0); }
+.toast--error { background: var(--out-ink); }
+
+/* ---------- モーダル ---------- */
+/* <div class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="…"><div class="modal-panel">…</div></div>
+   開いている間は <body class="is-locked"> で後ろを止める */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: rgba(20, 18, 30, .5);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  overscroll-behavior: contain;
+  animation: fade-in .2s ease;
+}
+@media (min-width: 560px) { .modal { align-items: center; } }
+.modal-panel {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100svh - 32px);
+  overflow: auto;
+  padding: 24px 20px 20px;
+  background: var(--surface);
+  border-radius: 24px;
+  box-shadow: var(--shadow-2);
+  animation: rise-in .28s var(--ease);
+}
+.modal-title {
+  margin: 0 40px 10px 0;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 20px;
+  line-height: 1.45;
+}
+.modal-body { font-size: 14.5px; line-height: 1.8; color: var(--ink-2); }
+.modal-actions { display: grid; gap: 10px; margin-top: 22px; }
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg-2);
+  color: var(--ink);
+  cursor: pointer;
+}
+.modal-close::before, .modal-close::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 15px; height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+.modal-close::before { transform: translate(-50%, -50%) rotate(45deg); }
+.modal-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
+body.is-locked { overflow: hidden; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+/* ---------- ライン・メーター ---------- */
+/* 横の線の上に印が乗る。--v は 0〜100 の数（単位なし）。左＝きびしい（アウト寄り）、右＝ゆるい（セーフ寄り）
+   <div class="meter" style="--v:62"><div class="meter-track"></div><span class="meter-mark"></span></div> */
+.meter { --v: 50; position: relative; height: 26px; }
+.meter-track {
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--tri-soft);
+  transform: translateY(-50%);
+}
+.meter-mark {
+  position: absolute;
+  top: 50%;
+  left: clamp(4px, calc(var(--v) * 1%), calc(100% - 4px));
+  width: 8px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--ink);
+  box-shadow: 0 0 0 2.5px var(--surface), 0 2px 6px rgba(26, 24, 38, .3);
+  transform: translate(-50%, -50%);
+  transition: left .6s var(--ease);
+}
+/* 数字の札（印の上に出す） */
+.meter-tag {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  /* 端（0や100）でも札がはみ出しにくいよう、--v に合わせて札をずらす */
+  transform: translateX(calc(-10% - var(--v) * .8%));
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #FFFFFF;
+  font-family: var(--font-num);
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.meter-tag::after {
+  content: "";
+  position: absolute;
+  left: calc(10% + var(--v) * .8%); top: 100%;
+  border: 5px solid transparent;
+  border-top-color: var(--ink);
+  transform: translateX(-50%);
+}
+/* みんなの平均（線の下の小さな三角）。<span class="meter-avg" style="--a:48"></span> */
+.meter-avg {
+  --a: 50;
+  position: absolute;
+  top: calc(50% + 7px);
+  left: clamp(5px, calc(var(--a) * 1%), calc(100% - 5px));
+  width: 0; height: 0;
+  border: 5px solid transparent;
+  border-bottom: 7px solid var(--muted);
+  border-top: 0;
+  transform: translateX(-50%);
+}
+/* 大きいメーター（結果のいちばん上） */
+.meter--lg { height: 78px; }
+.meter--lg .meter-track { top: auto; bottom: 14px; height: 12px; transform: none; }
+.meter--lg .meter-mark { top: auto; bottom: 8px; width: 12px; height: 32px; border-radius: 6px; transform: translateX(-50%); box-shadow: 0 0 0 3px var(--surface), 0 3px 10px rgba(26, 24, 38, .32); }
+.meter--lg .meter-tag { font-size: 15px; padding: 3px 10px; }
+.meter--lg .meter-avg { top: auto; bottom: 0; }
+/* 本音の色の線 */
+.meter--feel .meter-track { background: linear-gradient(90deg, var(--only-line) 0 32.6%, transparent 32.6% 33.6%, var(--friend-line) 33.6% 66.4%, transparent 66.4% 67.4%, var(--anyone-line) 67.4% 100%); }
+/* 両端の言葉 */
+.meter-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.meter-scale > span:first-child { color: var(--out-ink); }
+.meter-scale > span:last-child { color: var(--safe-ink); }
+.meter-scale--plain > span { color: var(--muted) !important; }
+
+/* カテゴリ5本：名前｜メーター｜数字 */
+.meters { display: grid; gap: 6px; }
+.meter-row {
+  display: grid;
+  grid-template-columns: 4.6em minmax(0, 1fr) 2.4em;
+  align-items: center;
+  gap: 10px;
+}
+.meter-name { font-size: 13px; font-weight: 700; line-height: 1.3; color: var(--ink); }
+.meter-val {
+  font-family: var(--font-num);
+  font-weight: 800;
+  font-size: 16px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* ---------- 帯グラフ（3色の割合） ---------- */
+/* --w は割合の数（単位なし）。0 の帯は hidden にする
+   <div class="band"><span class="band-seg band-seg--out" style="--w:52"><span class="band-pct">52%</span></span>…</div> */
+.band {
+  display: flex;
+  gap: 2px;
+  height: 26px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--bg-2);
+}
+.band-seg {
+  --c: var(--ink-2); --c-text: #FFFFFF;
+  flex: var(--w, 1) 1 0%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c);
+  color: var(--c-text);
+  container-type: inline-size;
+  transition: flex-grow .6s var(--ease);
+}
+/* 白い字の帯は、白い字が読める少し暗い面（--out-fill など） */
+.band-seg--out  { --c: var(--out-fill); }
+.band-seg--moya { --c: var(--moya); --c-text: var(--ink); }
+.band-seg--safe { --c: var(--safe-fill); }
+.band-seg--only   { --c: var(--only); }
+.band-seg--friend { --c: var(--friend-fill); }
+.band-seg--anyone { --c: var(--anyone); }
+.band-pct {
+  font-family: var(--font-num);
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* 狭すぎる帯では数字を出さない */
+@container (max-width: 34px) { .band-pct { visibility: hidden; } }
+/* 自分の答え：帯の下に墨の線＋数字に下線 */
+.band-seg.is-mine { box-shadow: inset 0 -4px 0 var(--ink); }
+.band-seg.is-mine .band-pct { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 2px; }
+.band--thin { height: 10px; border-radius: 5px; }
+.band--thin .band-pct { display: none; }
+.band--lg { height: 36px; border-radius: 12px; }
+.band--lg .band-pct { font-size: 14px; }
+
+/* 凡例（色の丸＋文字） */
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; font-weight: 700; color: var(--ink-2); }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.legend-item::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--c, var(--ink-2)); }
+.legend-item--out { --c: var(--out); }
+.legend-item--moya { --c: var(--moya); }
+.legend-item--safe { --c: var(--safe); }
+.legend-item--only { --c: var(--only); }
+.legend-item--friend { --c: var(--friend); }
+.legend-item--anyone { --c: var(--anyone); }
+
+/* 問題ごとの行（問題の文・帯・自分の答え） */
+.band-list { display: grid; gap: 0; }
+.band-row { display: grid; gap: 8px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.band-row:last-child { border-bottom: 0; }
+.band-q { display: flex; gap: 8px; font-size: 14px; line-height: 1.6; font-weight: 700; color: var(--ink); }
+.band-qn { flex: none; font-family: var(--font-display); font-weight: 900; font-size: 13px; line-height: 1.7; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 2.2em; }
+.band-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+/* ---------- 数字の大きな表示 ---------- */
+.bignum { display: inline-flex; align-items: baseline; gap: 4px; color: var(--ink); white-space: nowrap; }
+.bignum-val {
+  font-family: var(--font-num);
+  font-weight: 800;
+  font-size: clamp(64px, 20vw, 92px);
+  line-height: .9;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+  font-variation-settings: "opsz" 96;
+}
+.bignum-unit { font-family: var(--font-display); font-weight: 900; font-size: 20px; letter-spacing: .02em; }
+.bignum-label { display: block; font-size: 12.5px; font-weight: 700; letter-spacing: .1em; color: var(--muted); }
+.bignum--md .bignum-val { font-size: 48px; }
+.bignum--md .bignum-unit { font-size: 16px; }
+
+/* 小さな数字を並べる（2〜3つ） */
+.stats-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: 8px; }
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 12px 10px;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+.stat-label { font-size: 11.5px; font-weight: 700; color: var(--muted); line-height: 1.4; }
+.stat-val { font-family: var(--font-num); font-weight: 800; font-size: clamp(20px, 6.4vw, 26px); line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -.02em; white-space: nowrap; }
+.stat-val small { font-family: var(--font-display); font-size: 13px; font-weight: 700; margin-inline: 2px; letter-spacing: 0; }
+
+/* ---------- お知らせ・期間限定 ---------- */
+.notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+.notice > svg { width: 20px; height: 20px; flex: none; margin-top: 2px; color: var(--ink); }
+.notice b, .notice strong { color: var(--ink); }
+.notice--warn { background: var(--moya-soft); border-color: var(--moya-line); }
+.notice--ink { background: var(--ink); border-color: var(--ink); color: rgba(255, 255, 255, .78); }
+.notice--ink b, .notice--ink strong, .notice--ink > svg { color: #FFFFFF; }
+
+/* 「10月31日まで あと◯日」の札 */
+.badge-limited {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  min-height: 30px;
+  padding: 4px 12px 4px 10px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: #FFFFFF;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.badge-limited::before {
+  content: "";
+  width: 8px; height: 8px;
+  flex: none;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--moya);
+  box-shadow: 0 0 0 0 rgba(242, 165, 22, .6);
+  animation: pulse 2s infinite;
+}
+.badge-limited b { font-family: var(--font-num); font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; margin-inline: 2px; }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(242, 165, 22, .55); }
+  70% { box-shadow: 0 0 0 7px rgba(242, 165, 22, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(242, 165, 22, 0); }
+}
+
+/* ---------- ランキング（当てっこ） ---------- */
+.rank-list { display: grid; list-style: none; margin: 0; padding: 0; }
+.rank-item {
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--line);
+}
+.rank-item:last-child { border-bottom: 0; }
+.rank-pos { font-family: var(--font-num); font-weight: 800; font-size: 17px; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rank-item:nth-child(1) .rank-pos { color: var(--ink); font-size: 20px; }
+.rank-name { font-weight: 700; font-size: 14.5px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-score { font-family: var(--font-num); font-weight: 800; font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rank-score small { font-size: 12px; color: var(--muted); font-weight: 700; }
+.rank-act {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; min-width: 44px; padding: 0 8px;
+  border: 0; border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11.5px; font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+@media (hover: hover) { .rank-act:hover { background: var(--bg-2); color: var(--ink); } }
+/* 自分の行：列の位置を変えずに、左右へ少しはみ出した地を敷く */
+.rank-item.is-me { background: var(--moya-soft); border-radius: 12px; border-bottom-color: transparent; margin-inline: -6px; padding-inline: 8px; }
+
+/* ---------- 読み込み中 ---------- */
+.skeleton {
+  display: block;
+  min-height: 1em;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #E4DCCD 0%, #F2ECE2 50%, #E4DCCD 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.spinner {
+  display: inline-block;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2.5px solid var(--bg-2);
+  border-top-color: var(--ink);
+  animation: spin .8s linear infinite;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- 便利なまとめ（部品より後に置き、余白の指定が勝つように） ---------- */
+.stack { display: flex; flex-direction: column; gap: var(--gap, 16px); }
+.stack-sm { --gap: 8px; }
+.stack-lg { --gap: 28px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap, 8px); }
+.row.between { justify-content: space-between; }
+.center { text-align: center; }
+.mt-s { margin-top: 8px; } .mt-m { margin-top: 16px; } .mt-l { margin-top: 28px; } .mt-xl { margin-top: 44px; }
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+/* ---------- 動きを減らす設定 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- 高さの低い画面（iPhone SE の Safari など・見える高さ 700px 以下） ---------- */
+/* ヘッダーを細くして、遊ぶ画面の3つ目の答えや「はじめる」が最初の画面に入るようにする */
+@media (max-height: 700px) {
+  .site-header { min-height: 48px; padding-block: 4px; }
+}

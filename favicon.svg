@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 仮のアイコン：墨の角丸に、信号の3色の線と、その上に乗る印（線引きの位置） -->
+  <rect width="64" height="64" rx="16" fill="#1A1826"/>
+  <rect x="9" y="28.5" width="14" height="7" rx="3.5" fill="#E5484D"/>
+  <rect x="25" y="28.5" width="14" height="7" rx="3.5" fill="#F2A516"/>
+  <rect x="41" y="28.5" width="14" height="7" rx="3.5" fill="#22A06B"/>
+  <rect x="34.5" y="15" width="9" height="34" rx="4.5" fill="#FFFFFF" stroke="#1A1826" stroke-width="3.5"/>
+</svg>
