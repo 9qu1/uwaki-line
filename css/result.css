@@ -278,6 +278,7 @@
   line-height: 1.2;
   white-space: nowrap;
 }
+a.rs-qbtn { text-decoration: none; -webkit-tap-highlight-color: transparent; } /* X・LINE は <a>（押したリンクで開くため） */
 .rs-qbtn:active .rs-qic { transform: translateY(2px); }
 @media (hover: hover) { .rs-qbtn:hover { background: var(--bg-2); color: var(--ink); } }
 .rs-qic {

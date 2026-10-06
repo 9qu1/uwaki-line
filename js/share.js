@@ -186,6 +186,7 @@ export function shareText(model, { tag = true } = {}) {
  *   開いたあとで opener を切る（開いた先から、このページを動かせないように）
  */
 function openWindow(url) {
+  if (isPhone()) { location.href = url; return; } // スマホは新しいタブを作らない（空のタブが残るため）
   let w = null;
   try { w = window.open(url, "_blank"); } catch { w = null; }
   if (w) {
@@ -195,16 +196,43 @@ function openWindow(url) {
   }
 }
 
-/** X（旧 Twitter）の投稿画面 */
+/** X（旧 Twitter）の投稿画面の URL */
+export const xIntentUrl = (text, url) => `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+/** LINE で送る URL（文と URL をいっしょに。当てっこの画面と同じ送り方） */
+export const lineShareHref = (text, url) => `https://line.me/R/share?text=${encodeURIComponent(`${text}\n${url}`)}`;
+
+/** X（旧 Twitter）の投稿画面（ボタンが <a> でないときの予備） */
 export function shareX(text, url) {
   track("share_click", { method: "x" });
-  openWindow(`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
+  openWindow(xIntentUrl(text, url));
 }
 
-/** LINE で送る（文と URL をいっしょに。当てっこの画面と同じ送り方） */
+/** LINE で送る（ボタンが <a> でないときの予備） */
 export function shareLine(text, url) {
   track("share_click", { method: "line" });
-  openWindow(`https://line.me/R/share?text=${encodeURIComponent(`${text}\n${url}`)}`);
+  openWindow(lineShareHref(text, url));
+}
+
+/**
+ * X・LINE のボタン（<a>）を「押したリンクそのもの」で開くようにする（2026-10-06 ユーザーの iPhone で直した）
+ *   スクリプトで window.open すると、iPhone ではアプリに切り替わらずブラウザで開き、
+ *   アプリに切り替わったときも空の新しいタブが残って「元の画面が真っ白」に見えた。
+ *   押した瞬間に href を入れ直し、ふつうのリンクとして開かせる（押したあとに href を変えても、開くのは新しい href）。
+ *   スマホは同じタブ（アプリがあればアプリが開き、元の画面はそのまま）・PC は新しいタブ
+ * @param {HTMLAnchorElement} a
+ * @param {() => string} getHref 押したときの URL（順位などがあとから届くので、押すたびに作る）
+ * @param {string} method 数えるときの名前（x / line）
+ */
+export function armShareLink(a, getHref, method) {
+  const phone = isPhone();
+  const set = () => {
+    a.href = getHref();
+    if (phone) { a.removeAttribute("target"); a.removeAttribute("rel"); }
+    else { a.target = "_blank"; a.rel = "noopener"; }
+  };
+  set();
+  a.addEventListener("pointerdown", set); // 長押しでコピーしたときも新しい URL に
+  a.addEventListener("click", () => { set(); track("share_click", { method }); });
 }
 
 /** リンクをコピー */

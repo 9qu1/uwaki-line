@@ -14,6 +14,10 @@ import * as api from "./api.js";
 import { h, icon, url, renderHeader, renderFooter, toast, track, endedView, modal, copyText, errorBox, errMsg, loadingView, xShareUrl, lineShareUrl, fmtDate, fill, picture } from "./ui.js";
 import { nameIssue } from "./namecheck.js";
 import { runQuestions } from "./play.js";
+import { isPhone } from "./share.js";
+
+// スマホでは X・LINE を同じタブで開く（新しいタブだとアプリに切り替わらず、空のタブが残って元の画面が真っ白に見えた・2026-10-06）
+const PHONE = isPhone();
 
 const N = QUESTIONS.length;
 const ID_RE = /^[a-z2-9]{8}$/;
@@ -123,8 +127,8 @@ function nameField(label, help) {
 
 function shareRow(text, link, place) {
   const items = [
-    h("a", { class: "btn btn-secondary btn-sm share-btn share-btn--x", href: xShareUrl(text, link), target: "_blank", rel: "noopener", onclick: () => track("share_click", { method: "x", place }) }, icon("x"), "X"),
-    h("a", { class: "btn btn-secondary btn-sm share-btn share-btn--line", href: lineShareUrl(text, link), target: "_blank", rel: "noopener", onclick: () => track("share_click", { method: "line", place }) }, icon("line"), "LINE"),
+    h("a", { class: "btn btn-secondary btn-sm share-btn share-btn--x", href: xShareUrl(text, link), target: PHONE ? null : "_blank", rel: PHONE ? null : "noopener", onclick: () => track("share_click", { method: "x", place }) }, icon("x"), "X"),
+    h("a", { class: "btn btn-secondary btn-sm share-btn share-btn--line", href: lineShareUrl(text, link), target: PHONE ? null : "_blank", rel: PHONE ? null : "noopener", onclick: () => track("share_click", { method: "line", place }) }, icon("line"), "LINE"),
     h("button", {
       class: "btn btn-secondary btn-sm share-btn", type: "button",
       onclick: async () => {

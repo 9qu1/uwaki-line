@@ -16,7 +16,7 @@ import { FEEL_TYPES } from "./data/types.js";
 import { scoreLine, scoreFeel, compareLineFeel, applyWord, typeById, isAnswers } from "./engine.js";
 import {
   ROOT_URL, SHORT_URL, readSaved, fetchStats, lineShareUrl, feelShareUrl, shareText, rankView,
-  shareX, shareLine, copyLink, shareNative, saveImage, shareInstagram, fileName, toast, isPhone, ensureResultCss, nameUnits, AVG_NEAR,
+  shareX, shareLine, xIntentUrl, lineShareHref, armShareLink, copyLink, shareNative, saveImage, shareInstagram, fileName, toast, isPhone, ensureResultCss, nameUnits, AVG_NEAR,
 } from "./share.js";
 import { cardBlob } from "./card.js";
 import { renderSister } from "./sister.js";
@@ -457,14 +457,17 @@ function shareSection(ctx) {
       <p class="small muted">リンクを開くと、あなたの結果とタイプの画像が出ます。見た人も、そのまま診断できます。</p>
     </div>
     <div class="rs-share-grid">
-      <button class="btn btn-secondary rs-sbtn" type="button" data-m="x">${brandIcon("x")}X でポスト</button>
-      <button class="btn btn-secondary rs-sbtn" type="button" data-m="line">${brandIcon("line")}LINE で送る</button>
+      <a class="btn btn-secondary rs-sbtn" href="#" data-m="x">${brandIcon("x")}X でポスト</a>
+      <a class="btn btn-secondary rs-sbtn" href="#" data-m="line">${brandIcon("line")}LINE で送る</a>
       <button class="btn btn-secondary rs-sbtn" type="button" data-m="instagram">${brandIcon("instagram")}インスタ</button>
       <button class="btn btn-secondary rs-sbtn" type="button" data-m="copy">${icon("link")}リンクをコピー</button>
     </div>
     ${navigator.share && isPhone() ? `<button class="btn btn-ghost btn-block" type="button" data-m="native">${icon("share")}ほかのアプリで送る</button>` : ""}
   </section>`);
-  el.querySelectorAll("[data-m]").forEach((b) => b.addEventListener("click", () => ctx.share(b.dataset.m)));
+  el.querySelectorAll("[data-m]").forEach((b) => {
+    if (b.tagName === "A") armShareLink(b, () => ctx.linkFor(b.dataset.m), b.dataset.m); // X・LINE は押したリンクで開く
+    else b.addEventListener("click", () => ctx.share(b.dataset.m));
+  });
   return el;
 }
 
@@ -472,12 +475,12 @@ function shareSection(ctx) {
 function quickShare(ctx) {
   const el = h(`<div class="rs-quick" role="group" aria-label="結果をシェア">
     <button class="rs-qbtn" type="button" data-m="image"><span class="rs-qic rs-qic--ink">${icon("save")}</span><span>画像を保存</span></button>
-    <button class="rs-qbtn" type="button" data-m="x"><span class="rs-qic">${brandIcon("x")}</span><span>X</span></button>
-    <button class="rs-qbtn" type="button" data-m="line"><span class="rs-qic">${brandIcon("line")}</span><span>LINE</span></button>
+    <a class="rs-qbtn" href="#" data-m="x"><span class="rs-qic">${brandIcon("x")}</span><span>X</span></a>
+    <a class="rs-qbtn" href="#" data-m="line"><span class="rs-qic">${brandIcon("line")}</span><span>LINE</span></a>
     <button class="rs-qbtn" type="button" data-m="instagram"><span class="rs-qic">${brandIcon("instagram")}</span><span>インスタ</span></button>
     <button class="rs-qbtn" type="button" data-m="copy"><span class="rs-qic rs-qic--line">${icon("link")}</span><span>コピー</span></button>
   </div>`);
-  el.querySelectorAll("[data-m]").forEach((b) => b.addEventListener("click", () => {
+  el.querySelectorAll("[data-m]").forEach((b) => b.tagName === "A" ? armShareLink(b, () => ctx.linkFor(b.dataset.m), b.dataset.m) : b.addEventListener("click", () => {
     if (b.dataset.m === "image") ctx.saveVariant("post");
     else ctx.share(b.dataset.m);
   }));
@@ -678,6 +681,11 @@ export function showResult(container, { kind, answers, attrs, word, playPromise 
       saveImage(b2, fileName(model, variant), { method: variantName[variant] }).then((r) => afterSave(r, variant, b2));
     });
   }
+  // X・LINE のボタン（<a>）が押されたときに開く URL
+  function linkFor(m) {
+    const url = shareUrl();
+    return m === "x" ? xIntentUrl(shareText(model), url) : lineShareHref(shareText(model, { tag: false }), url);
+  }
   function shareBy(m) {
     const url = shareUrl();
     const text = shareText(model);
@@ -701,7 +709,7 @@ export function showResult(container, { kind, answers, attrs, word, playPromise 
       else { toast("画像を作っています"); blobOf("story").then((b) => { if (b) go(b); }); }
     }
   }
-  const ctx = { previewUrl, saveVariant, share: shareBy };
+  const ctx = { previewUrl, saveVariant, share: shareBy, linkFor };
 
   // ---- 1画面に収まる部分 ----
   const shot = renderShot(model);
