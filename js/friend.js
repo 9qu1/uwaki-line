@@ -203,7 +203,7 @@ function main() {
   const sis = h('<section class="section"></section>');
   frag.append(sis);
   root.append(frag);
-  renderSister(sis, { place: "result" });
+  renderSister(sis, { place: "friend" }); // 飛んだ数の内訳を「友達のページ」に分ける（見た目は結果と同じ）
 }
 
 main();

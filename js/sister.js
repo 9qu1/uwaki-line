@@ -1,14 +1,23 @@
 // 作者のほかのサイト（リカイド・ナカミド）への紹介（結果担当。トップと結果画面で使う）
 //
-//   renderSister(container, { place: "top" | "result" })
+//   renderSister(container, { place: "top" | "result" | "friend" })（friend は友達に見せるページ r/・f/。見た目は result と同じ）
 //
 // 見た目が分かるように、それぞれの画面と結果の画像を小さく見せる（site/img/sister/。tools/sister/make-sister.py で作る）。
 // 広告に見えないようにする（「PR」などと書かない・作者のサイトだと分かる文）。リンクと UTM は config.js の SISTER。
-import { SISTER, AUTHOR } from "./config.js";
+import { SISTER, AUTHOR, API_BASE } from "./config.js";
 import { track, ensureResultCss } from "./share.js";
 
 const IMG = (name) => new URL(`../img/sister/${name}`, import.meta.url).href;
 const EXT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
+
+// 飛んだ数を API に知らせる（Discord の通知用・数だけ）。ページを離れても届くよう navigator.sendBeacon で。
+//   text/plain なら別のサイト（workers.dev）へも事前の問い合わせなしで送れる
+function countJump(site, place) {
+  const body = JSON.stringify({ e: "sister", to: site, at: place === "top" || place === "result" || place === "friend" ? place : "other" });
+  const u = API_BASE + "/api/ev";
+  try { if (navigator.sendBeacon && navigator.sendBeacon(u, new Blob([body], { type: "text/plain" }))) return; } catch { /* 下で送る */ }
+  try { fetch(u, { method: "POST", body, keepalive: true, mode: "no-cors", headers: { "content-type": "text/plain" } }).catch(() => {}); } catch { /* 数えられなくても飛ぶのは止めない */ }
+}
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -33,7 +42,7 @@ function siteCard({ key, name, sub, title, desc, screen, results, links, accent 
 /**
  * 作者のほかのサイト
  * @param {HTMLElement} container
- * @param {{place?: "top"|"result"}} opts
+ * @param {{place?: "top"|"result"|"friend"}} opts
  */
 export function renderSister(container, { place = "result" } = {}) {
   if (!container) return;
@@ -78,6 +87,8 @@ export function renderSister(container, { place = "result" } = {}) {
     <div class="ss-list">${rikaido}${nakamido}</div>
   </div>`;
   container.querySelectorAll("a[data-ev]").forEach((a) => {
-    a.addEventListener("click", () => track(a.dataset.ev, { place, site: a.dataset.site }));
+    const go = () => { track(a.dataset.ev, { place, site: a.dataset.site }); countJump(a.dataset.site, place); };
+    a.addEventListener("click", go);
+    a.addEventListener("auxclick", (e) => { if (e.button === 1) go(); }); // ホイールボタンで新しいタブに開いたとき
   });
 }
